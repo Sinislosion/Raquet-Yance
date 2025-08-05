@@ -3,6 +3,7 @@
 #include "comps/manual.h"
 #include "comps/rom_table.h"
 #include "comps/status_bar.h"
+#include "comps/colors.h"
 
 Raquet_Rect comp_space;
 
@@ -47,7 +48,7 @@ void comp_render() {
 
     comps_rom_table_render();
 
-    // TODO: comps_colors_render()
+    comps_colors_render();
     // TODO: comps_editor_render()
     
     if (comp_target == manual) {
