@@ -28,7 +28,7 @@ void runthedog(void) {
     bool did_hit = false;
 
     for (int i = 0; i < SDL_SCANCODE_COUNT; i++) {
-        if (Raquet_SDLKeys[i] != 0 && i != SDL_SCANCODE_LSHIFT) {
+        if (Raquet_SDLKeys[i] != 0 && i != SDL_SCANCODE_LSHIFT && i != SDL_SCANCODE_LCTRL) {
             key_tick += (Raquet_DeltaTime / 5);
             key_tick_other += (Raquet_DeltaTime / 5);
             did_hit = true;

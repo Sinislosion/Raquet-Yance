@@ -1,5 +1,6 @@
 #pragma once
 #include "Raquet.h"
+#include "bmp.h"
 
 extern Raquet_Rect comp_space;
 

@@ -82,6 +82,64 @@ void comp_update() {
         table_save();
     }
 
+    /* Import BMP */
+    if (Raquet_KeyCheck(SDL_SCANCODE_LCTRL) && Raquet_KeyCheck(SDL_SCANCODE_B)) {
+		SDL_Surface* bmp_surface = bmp_get_surface(Raquet_AbsoluteToAsset("yance-default-tilese-2t.bmp"));
+
+        printf("bmp x,y : %d, %d \n", bmp_surface->w, bmp_surface->h);
+		printf("bmp bpp: %f\n", (float) bmp_surface->pitch / (float) bmp_surface->w);
+
+		for (int y = 0; y < bmp_surface->h; y++) {
+			for (int x = 0; x < bmp_surface->w; x++) {
+				SDL_Color rgb = bmp_get_color(bmp_surface, x, y);
+				int avg = ((rgb.r + rgb.g + rgb.b) / 3) >> 6;
+				table_pixel_set_value(x, y, avg);
+
+			}
+		}
+	}
+
+    if (Raquet_KeyCheck(SDL_SCANCODE_LCTRL) && !Raquet_KeyCheck(SDL_SCANCODE_LSHIFT)) {
+        for (int i = SDL_SCANCODE_1; i <= SDL_SCANCODE_8; i++) {
+            if (Raquet_KeyCheck_Pressed(i)) {
+                palette_current_set(i - SDL_SCANCODE_1);
+                table_update_palette();
+                break;
+            }
+        }
+
+        if (key_can_go()) {
+            int color_target = palette_current_color_id; 
+            if (Raquet_KeyCheck(SDL_SCANCODE_RIGHT)) {
+                if ((color_target & 0x0F) < 0x0F) {
+                    color_target++;
+                }
+            }
+
+            if (Raquet_KeyCheck(SDL_SCANCODE_LEFT)) {
+                if ((color_target & 0x0F) > 0x00) {
+                    color_target--;
+                }
+            }
+
+            if (color_target != palette_current_color_id) {
+                if (color_target < 0x00) {
+                    color_target = 0x00;
+                }
+
+                if (color_target > 0x3F) {
+                    color_target = 0x3F;
+                }
+
+                palette_current_color_value_set(color_target);
+                table_update_palette();
+            }
+        }
+
+    
+
+    }
+
     switch (comp_target) {
         case rom_table:
             comps_rom_table_update();

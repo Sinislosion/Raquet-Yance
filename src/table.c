@@ -8,104 +8,80 @@ int rom_tile_count;
 table_sprite_size_modes table_sprite_size_mode = sprite_size_8x8;
 
 void table_init() {
-    
-    for ( int i = 0; i < table_tiles_max; i++ ) {
-        table_tiles[i].color_data = NULL;
-    }
-
+	for (int i = 0; i < table_tiles_max; i++) {
+		table_tiles[i].color_data = NULL;
+	}
 }
+
 
 void table_update_palette() {
-
-    const int tile_size = tile_rect.w * tile_rect.h;
-
-    for ( int t = 0; t < rom_tile_count; t++ ) {
-
-        for ( int i = 0; i < tile_size; i++ ) {
-            table_tiles[t].color_data[i] = palette_rgb_get(palette_current, table_tiles[t].values[i]);
-        }
-
-        tile_update_texture(&table_tiles[t]);
-    
-    }
+	for (int t = 0; t < rom_tile_count; t++) {
+		for (int i = 0; i < 64; i++) {
+			table_tiles[t].color_data[i] = palette_rgb_get(palette_current, table_tiles[t].values[i]);
+		}
+		tile_update_texture(&table_tiles[t]);
+	}
 }
 
-void table_load(char* filename) {
 
-    file_load(filename);
-
-    FILE* file = fopen(filename, "rb");
-
-    rom_tile_count = file_chr_rom_size >> 4;
-    
-    int err = fseek(file, file_chr_rom_start, SEEK_SET);
-    printf("Status of seeking through %s: %d\n", filename, err);
-
-    rom_binary = malloc(file_chr_rom_size);
-
-    err = fread(rom_binary, file_chr_rom_size, 1, file);
-    printf("Status of reading %s: %d\n", filename, err);
-
-    fclose(file);
-
-    for ( int t = 0; t < rom_tile_count; t++ ) {
-        tile_init(&table_tiles[t]);
-    }
-
-    uint8_t sizteen_bytes[16];
-
-    for ( int t = 0; t < rom_tile_count; t++ ) {
-
-        for ( int i = 0; i < 16; i++ ) {
-            sizteen_bytes[i] = rom_binary[(t << 4) + i];
-        }
-        _2bpp_to_tile(sizteen_bytes, &table_tiles[t]);
-
-    }
-
-    free(rom_binary);
-
+void table_load(char * filename) {
+	// checkout header
+	file_load(filename);
+	// actually load
+	FILE * file = fopen(filename, "rb");
+	rom_tile_count = file_chr_rom_size >> 4;
+	fseek(file, file_chr_rom_start, SEEK_SET);
+	rom_binary = malloc(file_chr_rom_size);
+	fread(rom_binary, file_chr_rom_size, 1, file);
+	fclose(file);
+	// initialize required tiles 
+	for (int t = 0; t < rom_tile_count; t++) {
+		tile_init(&table_tiles[t]);
+	}
+	// convert data
+	uint8_t sizteen_bytes[16];
+	for (int t = 0; t < rom_tile_count; t++) {
+		for (int i = 0; i < 16; i++) {
+			sizteen_bytes[i] = rom_binary[(t << 4) + i];
+		}
+		_2bpp_to_tile(sizteen_bytes, &table_tiles[t]);
+	}
+	// cleanup
+	free(rom_binary);
 }
 
 void table_new(int tile_count) {
-    uint8_t sizteen_bytes[16] = { 0 };
-
-    for ( int t = 0; t < tile_count; t++ ) {
-        tile_init(&table_tiles[t]);
-        _2bpp_to_tile(sizteen_bytes, &table_tiles[t]);
-    }
-
-    free(rom_binary);
-
+	uint8_t sizteen_bytes[16] = { 0 };
+	for (int t = 0; t < tile_count; t++) {
+		tile_init(&table_tiles[t]);
+		_2bpp_to_tile(sizteen_bytes, &table_tiles[t]);
+	}
+	rom_tile_count = tile_count;
+	file_chr_rom_start = 0;
+	file_chr_rom_size = rom_tile_count << 4;
+	file_set_filename("new.chr");
 }
 
 void table_save() {
-    int size = rom_tile_count * 16;
-    rom_binary = malloc(size);
-
-    uint8_t sizteen_bytes[16];
-
-    for ( int t = 0; t < rom_tile_count; t++ ) {
-
-        _tile_to_2bpp(&table_tiles[t], sizteen_bytes);
-
-        for ( int i = 0; i < 16; i++ ) {
-            rom_binary[(t << 4) + i] = sizteen_bytes[i];
-        }
-
-    }
-
-    FILE* file = fopen(file_filename, "r+b");
-
-    if ( file == NULL ) {
-        file = fopen(file_filename, "w");
-    }
-
-    fseek(file, file_chr_rom_start, SEEK_SET);
-    fwrite(rom_binary, size, 1, file);
-
-    free(rom_binary);
-
+	// setup
+	int size = rom_tile_count * 16;
+	rom_binary = malloc(size);
+	// convert data
+	uint8_t sizteen_bytes[16];
+	for (int t = 0; t < rom_tile_count; t++) {
+		_tile_to_2bpp(&table_tiles[t], sizteen_bytes);
+		for (int i = 0; i < 16; i++) {
+			rom_binary[(t << 4) + i] = sizteen_bytes[i]; 
+		}
+	}
+	// save
+	FILE * file = fopen(file_filename, "r+b");
+	if (file == NULL) file = fopen(file_filename, "w");
+	fseek(file, file_chr_rom_start, SEEK_SET);
+	fwrite(rom_binary, size, 1, file); 
+	fclose(file);
+	// cleanup
+	free(rom_binary);
 }
 
 int table_sprite_size_mode_translate(int t) {
